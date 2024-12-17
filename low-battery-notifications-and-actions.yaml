@@ -1,0 +1,1153 @@
+blueprint:
+  name: Notifications et Actions des Appareils
+  description: >
+    # 📳 Notifications et Actions des Appareils
+
+    **Version: 2.7**
+
+    🤔 Que fait votre appareil ? Soyez toujours au courant du début à la fin !🛎️🔌💸
+
+    **Si vous aimez mes blueprints et souhaitez montrer votre soutien ou simplement dire merci ?** [Cliquez ici](https://www.paypal.com/donate/?hosted_button_id=WAZS3QSDTPGA8) 🙂
+
+    <details>
+    <summary><b>Le Processus d'Automatisation:</b> 👈</summary>
+
+      - **Déclencheur de l'Appareil:**
+          - Entrez l'entité du capteur de puissance qui mesure la consommation actuelle de l'appareil. Les dispositifs courants avec ces capteurs incluent les prises intelligentes, les compteurs d'énergie, etc.
+          - L'automatisation est déclenchée lorsque la consommation de l'appareil dépasse une puissance définie.
+          - L'automatisation se termine lorsque la consommation de l'appareil passe en dessous d'une valeur définie.
+
+      - **Options de Notification:**
+          - Envoyez des messages de notification à un ou plusieurs appareils lorsque l'appareil démarre, termine ou que le chien de garde est déclenché.
+          - Votre message de fin peut également inclure des estimations de la consommation totale d'énergie et du coût.
+          - Incluez le suivi de la durée dans votre message de fin pour suivre le temps de fonctionnement de l'appareil pour la tâche ou le cycle.
+          - Choisissez d'envoyer des notifications répétées pour vous rappeler lorsque le cycle de l'appareil est terminé.
+          - Les notifications sont compatibles avec les appareils Apple iOS et Android, garantissant une accessibilité universelle.
+
+      - **Suivi de la Puissance:**
+          - Utilisez le suivi de la puissance pour estimer la consommation totale d'énergie et le coût.
+
+          ⚠️ **Avertissement** - Ces valeurs sont des estimations et doivent être utilisées uniquement comme guide. Veuillez éviter de vous fier uniquement à ces estimations pour leur exactitude et les utiliser à vos propres risques. Nous ne pouvons être tenus responsables des inexactitudes ou des pertes, dommages, désagréments ou autres problèmes qui peuvent survenir.
+
+      - **Suivi de la Durée:**
+          - Vous pouvez inclure le suivi de la durée dans votre message de fin pour surveiller le temps de fonctionnement de l'appareil pour chaque tâche ou cycle.
+
+      - **Chien de Garde:**
+          - L'option de chien de garde surveille l'achèvement du cycle de l'appareil.
+          - Il envoie une notification si l'achèvement du cycle échoue dans le délai spécifié.
+
+      - **Actions Personnalisées:**
+          - Adaptez les actions personnalisées selon vos préférences et besoins, améliorant la fonctionnalité de l'automatisation.
+          - Configurez des actions telles que le déclenchement d'annonces sur des plateformes comme The Voice (HA), Google, Alexa, etc., pour vous tenir informé des événements de l'appareil.
+
+      - **Automatisation Basée sur le Temps:**
+          - Spécifiez des heures de début et de fin précises ainsi que des sélections de jours de la semaine pour définir quand l'automatisation peut s'exécuter.
+
+      - **Conditions Personnalisées:**
+          - Entrez toutes les conditions personnalisées pour personnaliser davantage le processus d'automatisation.
+    </details>
+
+    Besoin d'aide ?
+
+    - FAQ: [Cliquez ici](https://community.home-assistant.io/t/650166/2)
+
+    - Support Communautaire Incluant les Mises à Jour: [Cliquez ici](https://community.home-assistant.io/t/650166)
+
+    Obligatoire = *
+  domain: automation
+  input:
+    appliance_power_settings:
+      name: "Paramètres de Puissance *"
+      icon: mdi:current-ac
+      collapsed: true
+      input:
+        power_sensor:
+          name: Capteur de Puissance *
+          description: >
+            Veuillez entrer l'entité du capteur de puissance qui mesure la consommation actuelle de l'appareil.
+            Les dispositifs courants qui possèdent ces capteurs incluent les prises intelligentes.
+            Ce capteur est essentiel pour déclencher l'automatisation lorsque l'appareil démarre et lorsqu'il termine.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: sensor
+        start_appliance_power:
+          name: Démarrage - Seuil de Puissance de l'Appareil
+          description: >
+            Spécifiez le seuil que la puissance doit dépasser pour indiquer que l'appareil a démarré son cycle.
+            La puissance doit passer de moins à plus de ce seuil.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 30
+              step: 1
+              unit_of_measurement: watts
+        start_time_delay:
+          name: Démarrage - Délai de Temps de Puissance
+          description: >
+            Spécifiez la durée pendant laquelle la puissance doit rester au-dessus du seuil pour indiquer que l'appareil a démarré son cycle.
+            La puissance doit rester au-dessus de son seuil pendant le délai de temps spécifié.
+            Si la puissance retombe en dessous du seuil dans ce délai, elle ne déclenchera pas.
+            Cela aidera à prévenir un faux déclenchement.
+          default: 1
+          selector:
+            number:
+              min: 0.25
+              max: 5
+              step: 0.25
+              unit_of_measurement: minutes
+        running_dead_zone:
+          name: Fonctionnement - Zone Morte
+          description: >
+            Après le démarrage de l'appareil, l'implémentation d'une zone morte peut prévenir les faux déclenchements de fin,
+            surtout si la puissance tombe brièvement en dessous du seuil de fin de l'appareil pendant le cycle après le démarrage.
+            Le réglage de la zone morte au-delà de ce point assure une conclusion fiable en prévenant un déclenchement de fin prématuré.
+
+            De plus, l'option d'utiliser le 'Compte de Répétition de Fin' offre une fonctionnalité similaire sans être soumise à un délai de temps spécifique.
+            Vous pouvez choisir d'utiliser à la fois la 'Zone Morte de Fonctionnement' et le 'Compte de Répétition de Fin', avec le 'Compte de Répétition de Fin' se produisant après la 'Zone Morte de Fonctionnement'.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 120
+              step: 1
+              unit_of_measurement: minutes
+        end_appliance_power:
+          name: Fin - Seuil de Puissance de l'Appareil
+          description: >
+            Spécifiez le seuil que la puissance doit rester en dessous pour indiquer que l'appareil a terminé son cycle.
+            La puissance doit passer de plus à moins de ce seuil.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 30
+              step: 1
+              unit_of_measurement: watts
+        end_time_delay:
+          name: Fin - Délai de Temps de Puissance
+          description: >
+            Spécifiez la durée pendant laquelle la puissance doit rester en dessous du seuil pour indiquer que l'appareil a terminé son cycle.
+            La puissance doit rester en dessous de son seuil pendant le délai de temps spécifié.
+            Si la puissance dépasse à nouveau le seuil dans ce délai, elle ne déclenchera pas.
+          default: 1
+          selector:
+            number:
+              min: 0.25
+              max: 5
+              step: 0.25
+              unit_of_measurement: minutes
+        end_repeat_count:
+          name: Fin - Compte de Répétition
+          description: >
+            Le nombre de fois que la condition 'Fin - Seuil de Puissance de l'Appareil + Délai de Temps de Puissance de Fin' doit être remplie avant de déclencher la fin du cycle.
+          default: 1
+          selector:
+            number:
+              min: 1
+              max: 10
+              mode: slider
+    start_notify_settings:
+      name: "Notification de Démarrage"
+      icon: mdi:bell-check-outline
+      collapsed: true
+      input:
+        include_start_notify:
+          name: Utiliser les Options de Notification de Démarrage (Optionnel)
+          description: >
+            Sélectionnez 'Activer les Options de Notification de Démarrage' si vous souhaitez recevoir une notification lorsque l'appareil démarre.
+          default: disable_start_notify_options
+          selector:
+            select:
+              options:
+                - label: Activer les Options de Notification de Démarrage
+                  value: "enable_start_notify_options"
+                - label: Désactiver les Options de Notification de Démarrage
+                  value: "disable_start_notify_options"
+        start_notify_device:
+          name: Appareils Notifiés
+          description: >
+            Sélectionnez les appareils à notifier lorsque l'appareil démarre.
+          default: []
+          selector:
+            device:
+              filter:
+                - integration: mobile_app
+              multiple: true
+        start_title:
+          name: Titre
+          description: >
+            Entrez le titre de la notification que vous souhaitez recevoir lorsque l'appareil démarre.
+          default: Machine à Laver
+          selector:
+            text:
+        start_message:
+          name: Message
+          description: >
+            Entrez le message de notification que vous souhaitez recevoir lorsque l'appareil démarre.
+          default: YES! Une autre charge est EN MARCHE :)
+          selector:
+            text:
+        start_notify_interruption_level:
+          name: Niveau d'Interruption - iOS Seulement
+          description: >
+            Sur les appareils fonctionnant sous iOS 15 et versions ultérieures, vous pouvez configurer le niveau d'interruption de vos notifications pour vous assurer qu'elles sont livrées selon vos préférences.
+            Choisissez le niveau d'interruption souhaité dans la liste déroulante.
+            Les notifications critiques et sensibles au temps doivent être activées dans l'application Home Assistant, et les notifications sensibles au temps doivent être autorisées dans vos paramètres de Focus.
+
+            Pour plus d'informations sur les niveaux d'interruption [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: active
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Default
+                  value: "active"
+                - label: Notifications Critiques
+                  value: "critical"
+                - label: Notifications Sensibles au Temps
+                  value: "time-sensitive"
+                - label: Notifications Silencieuses Sans Réveil de l'Écran
+                  value: "passive"
+        start_notify_sound:
+          name: Son de Notification - iOS Seulement
+          description: >
+            L'application Home Assistant pour iOS inclut des sons de notification intégrés, et vous pouvez importer des sons depuis votre appareil iOS dans l'application.
+            Des sons personnalisés peuvent également être ajoutés via iTunes ou depuis votre stockage cloud.
+            Lorsque vous entrez un son, assurez-vous d'utiliser le nom de fichier complet, y compris l'extension.
+
+            Pour plus d'informations sur l'utilisation des sons dans l'application Home Assistant, [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            text:
+        start_notify_data:
+          name: Options Android Seulement (Optionnel)
+          description: >
+            Les notifications de **haute priorité** garantissent que vous recevez des alertes importantes immédiatement.
+            Ces notifications contournent les délais de livraison normaux et sont livrées instantanément à votre appareil.
+
+            Les notifications **collantes** garantissent que les alertes importantes ne sont pas rejetées lorsqu'elles sont sélectionnées. Elles restent sur votre écran de notification jusqu'à ce que vous les effaciez activement ou les balayiez, garantissant que les informations critiques restent visibles jusqu'à ce qu'elles soient traitées.
+
+            Les **canaux de notification** vous permettent d'organiser facilement différents paramètres de notification,
+            y compris les sons de notification, les vibrations et d'autres fonctionnalités spécifiques à l'appareil.
+            Si vous choisissez cette option, veuillez entrer le nom de votre canal souhaité ci-dessous.
+
+            Pour plus d'informations sur les options de notification [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Haute Priorité
+                  value: "high_priority"
+                - label: Notification Collante
+                  value: "sticky"
+                - label: Canal de Notification
+                  value: "channel"
+        start_notify_channel:
+          name: Canal de Notification - Android Seulement
+          description: >
+            Si vous avez choisi d'utiliser un canal de notification, entrez simplement le nom d'un canal existant pour appliquer ses paramètres préconfigurés.
+            Si vous n'avez pas encore de canal, vous pouvez en créer un nouveau en entrant un nom ici.
+            Lorsque votre automatisation envoie la première notification, elle créera le canal sur votre appareil.
+            Après la création du canal, vous pouvez personnaliser ses paramètres de notification directement sur votre appareil.
+          default: []
+          selector:
+            text:
+    end_notify_settings:
+      name: "Notification de Fin"
+      icon: mdi:bell-ring-outline
+      collapsed: true
+      input:
+        include_end_notify:
+          name: Utiliser les Options de Notification de Fin (Optionnel)
+          description: >
+            Sélectionnez 'Activer les Options de Notification de Fin' si vous souhaitez recevoir une notification lorsque l'appareil termine.
+          default: disable_end_notify_options
+          selector:
+            select:
+              options:
+                - label: Activer les Options de Notification de Fin
+                  value: "enable_end_notify_options"
+                - label: Désactiver les Options de Notification de Fin
+                  value: "disable_end_notify_options"
+        end_notify_device:
+          name: Appareils Notifiés
+          description: >
+            Sélectionnez les appareils à notifier lorsque l'appareil a terminé.
+          default: []
+          selector:
+            device:
+              filter:
+                - integration: mobile_app
+              multiple: true
+        end_message_title:
+          name: Titre
+          description: >
+            Entrez le titre de la notification que vous souhaitez recevoir lorsque l'appareil a terminé.
+          default: Machine à Laver
+          selector:
+            text:
+        end_message:
+          name: Message
+          description: >
+            Entrez le message de notification que vous souhaitez recevoir lorsque l'appareil a terminé.
+          default: Yippee la machine à laver a terminé !
+          selector:
+            text:
+        end_notify_interruption_level:
+          name: Niveau d'Interruption - iOS Seulement
+          description: >
+            Sur les appareils fonctionnant sous iOS 15 et versions ultérieures, vous pouvez configurer le niveau d'interruption de vos notifications pour vous assurer qu'elles sont livrées selon vos préférences.
+            Choisissez le niveau d'interruption souhaité dans la liste déroulante.
+            Les notifications critiques et sensibles au temps doivent être activées dans l'application Home Assistant, et les notifications sensibles au temps doivent être autorisées dans vos paramètres de Focus.
+
+            Pour plus d'informations sur les niveaux d'interruption [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: active
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Default
+                  value: "active"
+                - label: Notifications Critiques
+                  value: "critical"
+                - label: Notifications Sensibles au Temps
+                  value: "time-sensitive"
+                - label: Notifications Silencieuses Sans Réveil de l'Écran
+                  value: "passive"
+        end_notify_sound:
+          name: Son de Notification - iOS Seulement
+          description: >
+            L'application Home Assistant pour iOS inclut des sons de notification intégrés, et vous pouvez importer des sons depuis votre appareil iOS dans l'application.
+            Des sons personnalisés peuvent également être ajoutés via iTunes ou depuis votre stockage cloud.
+            Lorsque vous entrez un son, assurez-vous d'utiliser le nom de fichier complet, y compris l'extension.
+
+            Pour plus d'informations sur l'utilisation des sons dans l'application Home Assistant, [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            text:
+        end_notify_data:
+          name: Options Android Seulement (Optionnel)
+          description: >
+            Les notifications de **haute priorité** garantissent que vous recevez des alertes importantes immédiatement.
+            Ces notifications contournent les délais de livraison normaux et sont livrées instantanément à votre appareil.
+
+            Les notifications **collantes** garantissent que les alertes importantes ne sont pas rejetées lorsqu'elles sont sélectionnées. Elles restent sur votre écran de notification jusqu'à ce que vous les effaciez activement ou les balayiez, garantissant que les informations critiques restent visibles jusqu'à ce qu'elles soient traitées.
+
+            Les **canaux de notification** vous permettent d'organiser facilement différents paramètres de notification,
+            y compris les sons de notification, les vibrations et d'autres fonctionnalités spécifiques à l'appareil.
+            Si vous choisissez cette option, veuillez entrer le nom de votre canal souhaité ci-dessous.
+
+            Pour plus d'informations sur les options de notification [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Haute Priorité
+                  value: "high_priority"
+                - label: Notification Collante
+                  value: "sticky"
+                - label: Canal de Notification
+                  value: "channel"
+        end_notify_channel:
+          name: Canal de Notification - Android Seulement
+          description: >
+            Si vous avez choisi d'utiliser un canal de notification, entrez simplement le nom d'un canal existant pour appliquer ses paramètres préconfigurés.
+            Si vous n'avez pas encore de canal, vous pouvez en créer un nouveau en entrant un nom ici.
+            Lorsque votre automatisation envoie la première notification, elle créera le canal sur votre appareil.
+            Après la création du canal, vous pouvez personnaliser ses paramètres de notification directement sur votre appareil.
+          default: []
+          selector:
+            text:
+        end_reminder_notification:
+          name: Notification de Rappel (Optionnel)
+          description: >
+            Réglez cette option pour recevoir des notifications répétées vous rappelant que le cycle de l'appareil est terminé.
+            Les notifications continueront jusqu'à ce que l'entité de notification de rappel soit activée ou que le nombre maximum de notifications soit atteint, garantissant que vous ne manquez pas la fin du cycle tout en évitant les rappels excessifs.
+          default: disable_reminder_notification
+          selector:
+            select:
+              options:
+                - label: Activer la Notification de Rappel
+                  value: "enable_reminder_notification"
+                - label: Désactiver la Notification de Rappel
+                  value: "disable_reminder_notification"
+        end_reminder_notification_entity:
+          name: Entité de Notification de Rappel
+          description: >
+            Sélectionnez l'entité qui arrêtera la notification de rappel.
+            Il s'agit généralement d'un capteur de contact placé sur la porte de votre appareil (par exemple, un capteur de porte de machine à laver) qui, lorsqu'il est ouvert, arrêtera les notifications de rappel.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: binary_sensor
+        end_reminder_notification_message:
+          name: Message de Notification de Rappel
+          description: >
+            Entrez le message que vous souhaitez recevoir comme rappel que l'appareil a terminé son cycle.
+            Ce message sera envoyé de manière répétée jusqu'à ce que l'entité de notification de rappel soit activée ou que le nombre maximum de notifications soit atteint.
+          default: Hey! Votre linge propre est prêt, ne le laissez pas pendre !
+          selector:
+            text:
+        end_reminder_notification_time_delay:
+          name: Délai de Temps de Notification de Rappel
+          description: >
+            Spécifiez la durée d'attente entre les messages de rappel.
+            Cela définit l'intervalle de temps auquel le rappel sera envoyé de manière répétée jusqu'à ce que l'entité de notification de rappel soit activée ou que le nombre maximum de notifications soit atteint.
+          default: 10
+          selector:
+            number:
+              min: 1
+              max: 60
+              step: 1
+              unit_of_measurement: minutes
+        end_reminder_notification_max_count:
+          name: Nombre Maximum de Notifications de Rappel
+          description: >
+            Spécifiez le nombre maximum de fois que la notification de rappel sera envoyée avant de s'arrêter.
+            Cela garantit que vous ne recevrez pas de notifications excessives.
+          default: 2
+          selector:
+            number:
+              min: 1
+              max: 10
+              step: 1
+    power_tracking_settings:
+      name: "Suivi de la Puissance"
+      icon: mdi:meter-electric-outline
+      collapsed: true
+      input:
+        include_power_tracking:
+          name: Utiliser l'Option de Suivi de la Puissance (Optionnel)
+          description: >
+            Vous avez la possibilité d'activer ou de désactiver le suivi de la consommation d'énergie.
+            Cette fonctionnalité vous permet d'inclure des informations sur la puissance dans votre message de notification de fin.
+            Alternativement, vous pouvez choisir de mettre à jour uniquement les assistants de début et de fin pour une utilisation dans votre action personnalisée de fin.
+            Vous avez également le choix de recevoir soit le total de kWh utilisé dans le cycle, soit le total de kWh utilisé, accompagné d'une estimation du coût pour le cycle.
+
+            ⚠️ **Avertissement** - Ces valeurs sont des estimations et doivent être utilisées uniquement comme guide.
+            Veuillez éviter de vous fier uniquement à ces estimations pour leur exactitude et les utiliser à vos propres risques.
+            Nous ne pouvons être tenus responsables des inexactitudes ou des pertes, dommages, désagréments ou autres problèmes qui peuvent survenir.
+          default: disable_power_tracking
+          selector:
+            select:
+              options:
+                - label: Activer - Suivi de la Consommation d'Énergie de Notification de Fin
+                  value: enable_power_tracking
+                - label: Activer - Suivi de la Consommation d'Énergie de Notification de Fin + Coût Total
+                  value: enable_power_tracking_and_cost
+                - label: Activer - Mise à Jour des Assistants de Début et de Fin Seulement
+                  value: enable_start_end_helpers
+                - label: Désactiver - Suivi de la Consommation d'Énergie
+                  value: disable_power_tracking
+        power_consumption_sensor:
+          name: Suivi de la Puissance - Capteur de Puissance
+          description: >
+            Sélectionnez le capteur qui fournit une mesure totale de la consommation d'énergie en kWh.
+            Cela peut être un total cumulatif ou un total quotidien.
+
+            **Note** Si vous choisissez un capteur de total quotidien qui s'étend sur deux jours, les informations peuvent ne pas être exactes.
+            Cela est dû au fait que les valeurs doivent augmenter continuellement du début à la fin du cycle, sans être réinitialisées à 0,0 kWh le jour suivant.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: sensor
+        end_message_kwh:
+          name: Suivi de la Puissance - Message de Fin - Consommation d'Énergie
+          description: >
+            Entrez le titre du message de notification pour la consommation d'énergie.
+            Il s'agit de la description utilisée dans le message de notification de fin, juste avant la lecture en kWh.
+          default: Consommation
+          selector:
+            text:
+        end_message_cost:
+          name: Suivi de la Puissance - Message de Fin - Coût
+          description: >
+            Entrez le titre du message de notification pour l'estimation du coût.
+            Il s'agit de la description utilisée dans le message de notification de fin, juste avant la lecture du coût.
+          default: Coût Approximatif $
+          selector:
+            text:
+        cost_per_kwh:
+          name: Suivi de la Puissance - Coût par kWh
+          description: >
+            Veuillez entrer votre assistant de nombre ou un capteur d'énergie pour spécifier le tarif de l'électricité par kWh.
+            Gardez à l'esprit que le tarif utilisé est déterminé lorsque l'appareil termine et reste constant tout au long du cycle, même s'il varie en fonction de l'heure de la journée.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain:
+                  - input_number
+                  - sensor
+        start_power_consumption:
+          name: Suivi de la Puissance - Assistant de Nombre de Début
+          description: >
+            Entrez un assistant de nombre qui collectera la lecture en kWh au début du cycle.
+            Cela doit être un assistant de nombre complètement indépendant et ne peut pas être le même que celui utilisé dans l'entrée 'Suivi de la Puissance - Assistant de Nombre de Fin' ci-dessous.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_number
+        end_power_consumption:
+          name: Suivi de la Puissance - Assistant de Nombre de Fin
+          description: >
+            Entrez un assistant de nombre qui collectera la lecture en kWh à la fin du cycle.
+            Cela doit être un assistant de nombre complètement indépendant et ne peut pas être le même que celui utilisé dans l'entrée 'Suivi de la Puissance - Assistant de Nombre de Début' ci-dessus.
+          default: []
+          selector:
+            entity:
+              filter:
+                domain: input_number
+    duration_tracking_settings:
+      name: "Suivi de la Durée"
+      icon: mdi:timer-sand-complete
+      collapsed: true
+      input:
+        include_duration_tracking:
+          name: Utiliser l'Option de Suivi de la Durée (Optionnel)
+          description: >
+            Vous pouvez inclure le suivi de la durée dans votre message de notification de fin pour surveiller le temps de fonctionnement de l'appareil pour chaque tâche ou cycle.
+          default: disable_duration_tracking
+          selector:
+            select:
+              options:
+                - label: Activer - Suivi de la Durée de Notification de Fin
+                  value: "enable_duration_tracking"
+                - label: Désactiver le Suivi de la Durée
+                  value: "disable_duration_tracking"
+        end_message_duration_tracking:
+          name: Suivi de la Durée - Message de Fin - Durée
+          description: >
+            Entrez le titre du message de notification pour le suivi de la durée.
+            Il s'agit de la description utilisée dans le message de notification de fin, juste avant le temps de durée.
+          default: Durée
+          selector:
+            text:
+    watchdog_settings:
+      name: "Chien de Garde"
+      icon: mdi:dog-side
+      collapsed: true
+      input:
+        include_watchdog:
+          name: Utiliser l'Option de Chien de Garde (Optionnel)
+          description: >
+            Cette fonctionnalité surveille votre appareil pour s'assurer qu'il termine sa tâche dans le délai imparti.
+            Lorsqu'il est activé, si l'appareil ne parvient pas à terminer sa tâche, l'automatisation expirera et enverra une notification pour vous alerter d'un problème potentiel.
+            Cela aide à traiter rapidement tout problème potentiel avec l'appareil.
+
+            **NOTE** - Si le chien de garde est déclenché, l'automatisation sera annulée.
+          default: disable_watchdog
+          selector:
+            select:
+              options:
+                - label: Activer le Chien de Garde
+                  value: "enable_watchdog"
+                - label: Désactiver le Chien de Garde
+                  value: "disable_watchdog"
+        watchdog_timeframe:
+          name: Délai
+          description: >
+            Spécifiez la durée maximale pendant laquelle le 'Chien de Garde' attendra que l'appareil termine sa tâche.
+            Si l'appareil dépasse ce délai, le 'Chien de Garde' se déclenchera et vous en informera, indiquant un problème potentiel.
+          default: 00:00:00
+          selector:
+            duration:
+        watchdog_title:
+          name: Titre
+          description: >
+            Entrez le titre de la notification pour le délai d'attente du chien de garde.
+          default: ⚠️ Chien de Garde de l'Appareil
+          selector:
+            text:
+        watchdog_message:
+          name: Message
+          description: >
+            Entrez le message de notification pour le délai d'attente du chien de garde.
+          default: Oups! Il est temps de vérifier la machine à laver.
+          selector:
+            text:
+        watchdog_notify_interruption_level:
+          name: Niveau d'Interruption - iOS Seulement
+          description: >
+            Sur les appareils fonctionnant sous iOS 15 et versions ultérieures, vous pouvez configurer le niveau d'interruption de vos notifications pour vous assurer qu'elles sont livrées selon vos préférences.
+            Choisissez le niveau d'interruption souhaité dans la liste déroulante.
+            Les notifications critiques et sensibles au temps doivent être activées dans l'application Home Assistant, et les notifications sensibles au temps doivent être autorisées dans vos paramètres de Focus.
+
+            Pour plus d'informations sur les niveaux d'interruption [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: active
+          selector:
+            select:
+              mode: dropdown
+              options:
+                - label: Default
+                  value: "active"
+                - label: Notifications Critiques
+                  value: "critical"
+                - label: Notifications Sensibles au Temps
+                  value: "time-sensitive"
+                - label: Notifications Silencieuses Sans Réveil de l'Écran
+                  value: "passive"
+        watchdog_notify_sound:
+          name: Son de Notification - iOS Seulement
+          description: >
+            L'application Home Assistant pour iOS inclut des sons de notification intégrés, et vous pouvez importer des sons depuis votre appareil iOS dans l'application.
+            Des sons personnalisés peuvent également être ajoutés via iTunes ou depuis votre stockage cloud.
+            Lorsque vous entrez un son, assurez-vous d'utiliser le nom de fichier complet, y compris l'extension.
+
+            Pour plus d'informations sur l'utilisation des sons dans l'application Home Assistant, [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            text:
+        watchdog_notify_data:
+          name: Options Android Seulement (Optionnel)
+          description: >
+            Les notifications de **haute priorité** garantissent que vous recevez des alertes importantes immédiatement.
+            Ces notifications contournent les délais de livraison normaux et sont livrées instantanément à votre appareil.
+
+            Les notifications **collantes** garantissent que les alertes importantes ne sont pas rejetées lorsqu'elles sont sélectionnées. Elles restent sur votre écran de notification jusqu'à ce que vous les effaciez activement ou les balayiez, garantissant que les informations critiques restent visibles jusqu'à ce qu'elles soient traitées.
+
+            Les **canaux de notification** vous permettent d'organiser facilement différents paramètres de notification,
+            y compris les sons de notification, les vibrations et d'autres fonctionnalités spécifiques à l'appareil.
+            Si vous choisissez cette option, veuillez entrer le nom de votre canal souhaité ci-dessous.
+
+            Pour plus d'informations sur les options de notification [Cliquez ici](https://community.home-assistant.io/t/650166/278)
+          default: []
+          selector:
+            select:
+              multiple: true
+              options:
+                - label: Haute Priorité
+                  value: "high_priority"
+                - label: Notification Collante
+                  value: "sticky"
+                - label: Canal de Notification
+                  value: "channel"
+        watchdog_notify_channel:
+          name: Canal de Notification - Android Seulement
+          description: >
+            Si vous avez choisi d'utiliser un canal de notification, entrez simplement le nom d'un canal existant pour appliquer ses paramètres préconfigurés.
+            Si vous n'avez pas encore de canal, vous pouvez en créer un nouveau en entrant un nom ici.
+            Lorsque votre automatisation envoie la première notification, elle créera le canal sur votre appareil.
+            Après la création du canal, vous pouvez personnaliser ses paramètres de notification directement sur votre appareil.
+          default: []
+          selector:
+            text:
+    custom_actions_settings:
+      name: "Actions Personnalisées"
+      icon: mdi:code-tags
+      collapsed: true
+      input:
+        include_custom_actions:
+          name: Utiliser les Options d'Action Personnalisée (Optionnel)
+          description: >
+            Personnalisez votre automatisation avec n'importe quelle action que vous souhaitez, qu'il s'agisse du début, du chien de garde ou de la fin d'un cycle.
+            Il est couramment utilisé pour jouer des annonces sur The Voice (HA), Google, Alexa, etc.
+            Il peut également être utilisé pour d'autres services de notification ou toute autre action que vous souhaitez effectuer.
+          default: []
+          selector:
+            select:
+              options:
+                - label: Activer les Actions Personnalisées - Début
+                  value: "enable_start_custom_actions"
+                - label: Activer les Actions Personnalisées - Chien de Garde
+                  value: "enable_watchdog_custom_actions"
+                - label: Activer les Actions Personnalisées - Fin
+                  value: "enable_end_custom_actions"
+              multiple: true
+        start_custom_actions:
+          name: Actions Personnalisées - Début
+          description: >
+            Entrez les actions que vous souhaitez exécuter au début.
+          default: []
+          selector:
+            action:
+        watchdog_custom_actions:
+          name: Actions Personnalisées - Chien de Garde
+          description: >
+            Entrez les actions que vous souhaitez exécuter lorsque le chien de garde est déclenché.
+          default: []
+          selector:
+            action:
+        end_custom_actions:
+          name: Actions Personnalisées - Fin
+          description: >
+            Entrez les actions que vous souhaitez exécuter à la fin.
+          default: []
+          selector:
+            action:
+    time_settings:
+      name: "Temps"
+      icon: mdi:clock-outline
+      collapsed: true
+      input:
+        include_time:
+          name: Utiliser les Options de Temps (Optionnel)
+          description: >
+            Cette option restreint l'automatisation à s'exécuter uniquement entre les heures de début et de fin spécifiées les jours de la semaine sélectionnés.
+            Cela peut être utile si vous faites fonctionner un appareil la nuit pendant que vous dormez et que vous ne souhaitez pas être notifié.
+          default: time_disabled
+          selector:
+            select:
+              options:
+                - label: Activer les options de temps
+                  value: "time_enabled"
+                - label: Désactiver les options de temps
+                  value: "time_disabled"
+        after_time:
+          name: Heure de Début
+          description: >
+            Définissez l'heure de début.
+          default: 00:00:00
+          selector:
+            time:
+        before_time:
+          name: Heure de Fin
+          description: >
+            Définissez l'heure de fin.
+          default: 00:00:00
+          selector:
+            time:
+        weekday_options:
+          name: Jours de la Semaine
+          description: >
+            Sélectionnez les jours de la semaine où vous souhaitez que l'automatisation s'exécute. Vous devez sélectionner "Activer les options de temps" ci-dessus pour que les sélections de jours de la semaine fonctionnent.
+          default:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+          selector:
+            select:
+              multiple: true
+              mode: list
+              options:
+                - label: Lundi
+                  value: "mon"
+                - label: Mardi
+                  value: "tue"
+                - label: Mercredi
+                  value: "wed"
+                - label: Jeudi
+                  value: "thu"
+                - label: Vendredi
+                  value: "fri"
+                - label: Samedi
+                  value: "sat"
+                - label: Dimanche
+                  value: "sun"
+    global_conditions_settings:
+      name: "Conditions Globales"
+      icon: mdi:earth
+      collapsed: true
+      input:
+        global_conditions:
+          name: Conditions Globales
+          description: >
+            Entrez toutes les conditions globales que vous souhaitez appliquer à l'automatisation.
+          default: []
+          selector:
+            condition:
+
+mode: single
+max_exceeded: silent
+
+variables:
+  power_sensor: !input power_sensor
+  start_appliance_power: !input start_appliance_power
+  start_time_delay: !input start_time_delay
+  end_appliance_power: !input end_appliance_power
+  end_time_delay: !input end_time_delay
+  end_repeat_count: !input end_repeat_count
+  include_start_notify: !input include_start_notify
+  start_notify_device: !input start_notify_device
+  start_title: !input start_title
+  start_message: !input start_message
+  start_notify_interruption_level: !input start_notify_interruption_level
+  start_notify_sound: !input start_notify_sound
+  start_notify_data: !input start_notify_data
+  start_notify_channel: !input start_notify_channel
+  running_dead_zone: !input running_dead_zone
+  include_end_notify: !input include_end_notify
+  end_notify_device: !input end_notify_device
+  end_message_title: !input end_message_title
+  end_message: !input end_message
+  end_notify_interruption_level: !input end_notify_interruption_level
+  end_notify_sound: !input end_notify_sound
+  end_notify_data: !input end_notify_data
+  end_notify_channel: !input end_notify_channel
+  end_reminder_notification: !input end_reminder_notification
+  end_reminder_notification_entity: !input end_reminder_notification_entity
+  end_reminder_notification_message: !input end_reminder_notification_message
+  end_reminder_notification_time_delay: !input end_reminder_notification_time_delay
+  end_reminder_notification_max_count: !input end_reminder_notification_max_count
+  include_power_tracking: !input include_power_tracking
+  power_consumption_sensor: !input power_consumption_sensor
+  end_message_kwh: !input end_message_kwh
+  end_message_cost: !input end_message_cost
+  cost_per_kwh: !input cost_per_kwh
+  start_power_consumption: !input start_power_consumption
+  end_power_consumption: !input end_power_consumption
+  include_duration_tracking: !input include_duration_tracking
+  end_message_duration_tracking: !input end_message_duration_tracking
+  start_time: "{{ now().timestamp() }}"
+  include_watchdog: !input include_watchdog
+  watchdog_timeframe: !input watchdog_timeframe
+  watchdog_title: !input watchdog_title
+  watchdog_message: !input watchdog_message
+  watchdog_notify_interruption_level: !input watchdog_notify_interruption_level
+  watchdog_notify_sound: !input watchdog_notify_sound
+  watchdog_notify_data: !input watchdog_notify_data
+  watchdog_notify_channel: !input watchdog_notify_channel
+  include_custom_actions: !input include_custom_actions
+  start_custom_actions: !input start_custom_actions
+  watchdog_custom_actions: !input watchdog_custom_actions
+  end_custom_actions: !input end_custom_actions
+  include_time: !input include_time
+  after_time: !input after_time
+  before_time: !input before_time
+  weekday_options: !input weekday_options
+  global_conditions: !input global_conditions
+
+# Start notify data
+
+  start_message_data: >-
+    {% set message = namespace(data={}) %}
+    {% set push = namespace(data={}) %}
+    {% if start_notify_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
+      {% set push.data = dict(push.data, **{ 'interruption-level': start_notify_interruption_level }) %}
+    {% endif %}
+    {% if start_notify_sound != [] %}
+      {% set push.data = dict(push.data, **{ 'sound': start_notify_sound }) %}
+    {% endif %}
+    {% if push.data %}
+      {% set message.data = dict(message.data, **{ 'push': push.data }) %}
+    {% endif %}
+    {% if 'high_priority' in start_notify_data %}
+      {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
+    {% endif %}
+    {% if 'channel' in start_notify_data %}
+      {% set message.data = dict(message.data, **{ 'channel': start_notify_channel }) %}
+    {% endif %}
+    {% if 'sticky' in start_notify_data %}
+      {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
+    {% endif %}
+    {{ message.data }}
+
+# End notify data
+
+  end_message_data: >-
+    {% set message = namespace(data={}) %}
+    {% set push = namespace(data={}) %}
+    {% if end_notify_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
+      {% set push.data = dict(push.data, **{ 'interruption-level': end_notify_interruption_level }) %}
+    {% endif %}
+    {% if end_notify_sound != [] %}
+      {% set push.data = dict(push.data, **{ 'sound': end_notify_sound }) %}
+    {% endif %}
+    {% if push.data %}
+      {% set message.data = dict(message.data, **{ 'push': push.data }) %}
+    {% endif %}
+    {% if 'high_priority' in end_notify_data %}
+      {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
+    {% endif %}
+    {% if 'channel' in end_notify_data %}
+      {% set message.data = dict(message.data, **{ 'channel': end_notify_channel }) %}
+    {% endif %}
+    {% if 'sticky' in end_notify_data %}
+      {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
+    {% endif %}
+    {{ message.data }}
+
+# Watchdog notify data
+
+  watchdog_message_data: >-
+    {% set message = namespace(data={}) %}
+    {% set push = namespace(data={}) %}
+    {% if watchdog_notify_interruption_level in ['active', 'critical', 'time-sensitive', 'passive'] %}
+      {% set push.data = dict(push.data, **{ 'interruption-level': watchdog_notify_interruption_level }) %}
+    {% endif %}
+    {% if watchdog_notify_sound != [] %}
+      {% set push.data = dict(push.data, **{ 'sound': watchdog_notify_sound }) %}
+    {% endif %}
+    {% if push.data %}
+      {% set message.data = dict(message.data, **{ 'push': push.data }) %}
+    {% endif %}
+    {% if 'high_priority' in watchdog_notify_data %}
+      {% set message.data = dict(message.data, **{ 'ttl': 0, 'priority': 'high' }) %}
+    {% endif %}
+    {% if 'channel' in watchdog_notify_data %}
+      {% set message.data = dict(message.data, **{ 'channel': watchdog_notify_channel }) %}
+    {% endif %}
+    {% if 'sticky' in watchdog_notify_data %}
+      {% set message.data = dict(message.data, **{ 'sticky': "true" }) %}
+    {% endif %}
+    {{ message.data }}
+
+# Work out the actual watchdog duration taking into account the running dead zone time
+
+  watchdog_duration: >-
+    {% set dead_zone_seconds = running_dead_zone * 60 %}
+    {% set hours = watchdog_timeframe.hours | default(0) %}
+    {% set minutes = watchdog_timeframe.minutes | default(0) %}
+    {% set seconds = watchdog_timeframe.seconds | default(0) %}
+    {% set watchdog_seconds = (hours * 3600) + (minutes * 60) + seconds %}
+    {% set duration_total_in_seconds = watchdog_seconds - dead_zone_seconds %}
+    {% set duration_hours = duration_total_in_seconds // 3600 %}
+    {% set duration_minutes = (duration_total_in_seconds % 3600) // 60 %}
+    {% set duration_seconds = duration_total_in_seconds % 60 %}
+    {{ '%02d:%02d:%02d' | format(duration_hours, duration_minutes, duration_seconds) }}
+
+triggers:
+  - trigger: numeric_state
+    id: "t0"
+    entity_id: !input power_sensor
+    above: !input start_appliance_power
+    below: "24000"
+    for:
+      minutes: !input start_time_delay
+
+# All Conditions
+condition:
+# Check The Time Options
+  - condition: or
+    conditions:
+      - "{{ include_time == 'time_disabled' }}"
+      - condition: and
+        conditions:
+        - condition: time
+          after: !input after_time
+          before: !input before_time
+          weekday: !input weekday_options
+        -  "{{ include_time == 'time_enabled' }}"
+
+# Global Conditions
+  - condition: and
+    conditions: !input global_conditions
+
+action:
+  - choose:
+    - alias: "Check if power tracking is enabled"
+      conditions:
+        - "{{ (include_power_tracking == 'enable_power_tracking') or (include_power_tracking == 'enable_power_tracking_and_cost') or (include_power_tracking == 'enable_start_end_helpers') }}"
+      sequence:
+        - action: input_number.set_value
+          target:
+            entity_id: !input start_power_consumption
+          data_template:
+            value: "{{ states(power_consumption_sensor) | float }}"
+  - choose:
+    - alias: "Check if start of notification is enabled"
+      conditions:
+        - "{{ include_start_notify == 'enable_start_notify_options' }}"
+      sequence:
+        - alias: Send a notification to each device
+          repeat:
+            for_each: !input start_notify_device
+            sequence:
+              - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                data:
+                  title: !input start_title
+                  message: !input start_message
+                  data: "{{ start_message_data }}"
+  - choose:
+    - alias: "Perform the custom start action"
+      conditions:
+        - condition: template
+          value_template: "{{ 'enable_start_custom_actions' in include_custom_actions }}"
+      sequence: !input start_custom_actions
+  - alias: "Wait the number of minutes set in running dead zone"
+    delay:
+      minutes: !input running_dead_zone
+  - choose:
+      - conditions: "{{ include_watchdog == 'enable_watchdog' }}"
+        sequence:
+          - alias: "Wait until appliance has finished"
+            repeat:
+              count: !input end_repeat_count
+              sequence:
+                - wait_for_trigger:
+                    - trigger: numeric_state
+                      entity_id: !input power_sensor
+                      below: !input end_appliance_power
+                      for:
+                        minutes: !input end_time_delay
+                  timeout: "{{ watchdog_duration }}"
+          - choose:
+              - conditions: "{{ wait.trigger is none }}"
+                sequence:
+                  - choose:
+                    - alias: "Check time condition"
+                      conditions:
+                        -  "{{ include_time == 'time_enabled' }}"
+                        - condition: time
+                          after: !input before_time
+                          before: !input after_time
+                          weekday: !input weekday_options
+                      sequence:
+                        - stop: "Stop the automation"
+                  - alias: Send a notification to each device
+                    repeat:
+                      for_each: !input end_notify_device
+                      sequence:
+                        - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                          data:
+                            title: !input watchdog_title
+                            message: "{{watchdog_message}}"
+                            data: "{{ watchdog_message_data }}"
+                  - choose:
+                    - alias: "Perform the custom watchdog action"
+                      conditions:
+                        - condition: template
+                          value_template: "{{ 'enable_watchdog_custom_actions' in include_custom_actions }}"
+                      sequence: !input watchdog_custom_actions
+                  - stop: "Stop the automation"
+      - conditions: "{{ include_watchdog == 'disable_watchdog' }}"
+        sequence:
+          - alias: "Wait until appliance has finished"
+            repeat:
+              count: !input end_repeat_count
+              sequence:
+                - wait_for_trigger:
+                    - trigger: numeric_state
+                      entity_id: !input power_sensor
+                      below: !input end_appliance_power
+                      for:
+                        minutes: !input end_time_delay
+  - choose:
+    - alias: "Check time condition"
+      conditions:
+        -  "{{ include_time == 'time_enabled' }}"
+        - condition: time
+          after: !input before_time
+          before: !input after_time
+          weekday: !input weekday_options
+      sequence:
+        - stop: "Stop the automation"
+  - choose:
+    - alias: "Check if power tracking is enabled"
+      conditions:
+        - "{{ (include_power_tracking == 'enable_power_tracking') or (include_power_tracking == 'enable_power_tracking_and_cost') or (include_power_tracking == 'enable_start_end_helpers') }}"
+      sequence:
+        - action: input_number.set_value
+          target:
+            entity_id: !input end_power_consumption
+          data_template:
+            value: "{{ states(power_consumption_sensor) | float }}"
+  - choose:
+    - alias: "Perform the custom end action"
+      conditions:
+        - condition: template
+          value_template: "{{ 'enable_end_custom_actions' in include_custom_actions }}"
+      sequence: !input end_custom_actions
+  - choose:
+    - alias: "Check if end of notification is enabled"
+      conditions:
+        - "{{ include_end_notify == 'enable_end_notify_options' }}"
+      sequence:
+        - alias: Send a notification to each device
+          repeat:
+            for_each: !input end_notify_device
+            sequence:
+              - choose:
+                - alias: "Check if end of notification is enabled and no power tracking"
+                  conditions:
+                    - "{{ (include_power_tracking == 'disable_power_tracking') or (include_power_tracking == 'enable_start_end_helpers') }}"
+                  sequence:
+                    - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                      data:
+                        title: !input end_message_title
+                        message: >
+                          {{end_message}}
+                          {% if include_duration_tracking == "enable_duration_tracking" %}
+                          {% set end_time = now().timestamp() %}
+                          {% set duration = (end_time - start_time) | int %}
+                          {% set hours = (duration // 3600) | int %}
+                          {% set minutes = ((duration % 3600) // 60) | int %}
+                          {% set seconds = (duration % 60) | int %}
+                          {{'\n'}}{{ end_message_duration_tracking }} {{ '%02d' | format(hours) }}:{{ '%02d' | format(minutes) }}:{{ '%02d' | format(seconds) }}
+                          {% endif %}
+                        data: "{{ end_message_data }}"
+                - alias: "Check if end of notification is enabled and no power tracking is total power"
+                  conditions:
+                    - "{{ include_power_tracking == 'enable_power_tracking' }}"
+                  sequence:
+                    - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                      data:
+                        title: !input end_message_title
+                        message: >
+                          {{end_message}}
+                          {% set kwh = states(end_power_consumption) | float - states(start_power_consumption) | float %}
+                          {{'\n'}}{{end_message_kwh}} {{kwh | round(2) }} kWh
+                          {% if include_duration_tracking == "enable_duration_tracking" %}
+                          {% set end_time = now().timestamp() %}
+                          {% set duration = (end_time - start_time) | int %}
+                          {% set hours = (duration // 3600) | int %}
+                          {% set minutes = ((duration % 3600) // 60) | int %}
+                          {% set seconds = (duration % 60) | int %}
+                          {{'\n'}}{{ end_message_duration_tracking }} {{ '%02d' | format(hours) }}:{{ '%02d' | format(minutes) }}:{{ '%02d' | format(seconds) }}
+                          {% endif %}
+                        data: "{{ end_message_data }}"
+                - alias: "Check if end of notification is enabled and no power tracking is total power and cost"
+                  conditions:
+                    - "{{ include_power_tracking == 'enable_power_tracking_and_cost' }}"
+                  sequence:
+                    - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                      data:
+                        title: !input end_message_title
+                        message: >
+                          {{end_message}}
+                          {% set kwh = states(end_power_consumption) | float - states(start_power_consumption) | float %}
+                          {{'\n'}}{{end_message_kwh}} {{kwh | round(2) }} kWh
+                          {% set cost = (states(end_power_consumption) | float - states(start_power_consumption) | float) * (states(cost_per_kwh) | float) %}
+                          {{'\n'}}{{end_message_cost}}{{cost | round(2) }}
+                          {% if include_duration_tracking == "enable_duration_tracking" %}
+                          {% set end_time = now().timestamp() %}
+                          {% set duration = (end_time - start_time) | int %}
+                          {% set hours = (duration // 3600) | int %}
+                          {% set minutes = ((duration % 3600) // 60) | int %}
+                          {% set seconds = (duration % 60) | int %}
+                          {{'\n'}}{{ end_message_duration_tracking }} {{ '%02d' | format(hours) }}:{{ '%02d' | format(minutes) }}:{{ '%02d' | format(seconds) }}
+                          {% endif %}
+                        data: "{{ end_message_data }}"
+        - choose:
+            - alias: "Check if end reminder notification is enabled"
+              conditions:
+                - condition: template
+                  value_template: "{{ end_reminder_notification == 'enable_reminder_notification' }}"
+              sequence:
+                - wait_for_trigger:
+                    - trigger: state
+                      entity_id: !input end_reminder_notification_entity
+                      to: 'on'
+                  timeout:
+                    minutes: !input end_reminder_notification_time_delay
+                - repeat:
+                    while:
+                      - condition: template
+                        value_template: "{{ (is_state(end_reminder_notification_entity, 'off')) and (repeat.index <= end_reminder_notification_max_count) }}"
+                    sequence:
+                      - repeat:
+                          for_each: !input end_notify_device
+                          sequence:
+                            - action: "notify.mobile_app_{{ device_attr(repeat.item, 'name') | slugify }}"
+                              data:
+                                title: !input end_message_title
+                                message: !input end_reminder_notification_message
+                                data: "{{ end_message_data }}"
+                      - wait_for_trigger:
+                          - trigger: state
+                            entity_id: !input end_reminder_notification_entity
+                            to: 'on'
+                        timeout:
+                          minutes: !input end_reminder_notification_time_delay
