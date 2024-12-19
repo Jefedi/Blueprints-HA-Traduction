@@ -1,0 +1,494 @@
+name: Frigate Notifications (0.12.0.4e)
+author: SgtBatten
+homeassistant:
+  min_version: 2024.6.0
+description: |
+  ## Notifications Frigate
+
+  Ce blueprint enverra une notification à votre appareil lorsqu'un événement Frigate pour la caméra sélectionnée est déclenché. La notification inclura initialement la miniature de la détection, mais inclura une notification interactive permettant de visualiser le clip et l'instantané.
+
+  Avec ce blueprint, vous pouvez envoyer la notification à plusieurs appareils en laissant "Appareil" vide et en utilisant à la place un [groupe de notifications][1].
+
+  ### Exigences logicielles :
+    - Version minimale de Home Assistant : 2022.2
+    - Version minimale de Frigate : 0.11.0
+    - Version minimale de l'intégration Frigate : 3.0.0
+      - **Remarque :** "Activer le proxy d'événements de notification non authentifié" doit être coché lors de la configuration
+    - Un broker MQTT connecté à Home Assistant et Frigate.
+    - Version minimale iOS : 15.0
+
+  ### Entités requises :
+    - Nom de la caméra Frigate
+    - Appareil mobile (exécutant l'application HA Companion)
+
+  ### Fonctionnalités :
+    - Sélectionnez facilement l'entité de la caméra ou l'appareil mobile en utilisant un menu déroulant.
+    - Envoyer des notifications à un appareil mobile Android ou iOS ou à une TV.
+      - ou un groupe contenant l'une des combinaisons ci-dessus.
+      - pour les alertes TV, vous devez installer et configurer https://www.home-assistant.io/integrations/nfandroidtv/
+    - Configurer le titre et le message de la notification.
+    - Gérer dynamiquement des éléments tels que le type d'objet, les zones et la détection de visage à partir de doubletake.
+    - Gérer automatiquement certaines erreurs courantes comme la correspondance des cas et les mauvaises URL, etc.
+    - Envoyer éventuellement la notification en tant qu'alerte critique. (Critique)
+    - Limiter éventuellement la lecture audio pour les mises à jour de notification secondaires, et sur iOS, personnaliser le son. (Alerte une fois)
+    - Choisir de mettre à jour ou non la notification avec de nouvelles miniatures au fur et à mesure de leur disponibilité.
+    - Personnaliser la couleur et l'icône de la notification.
+    - Envoyer éventuellement une vue en direct à iOS.
+    - Configurer des canaux de notification personnalisés sur Android.
+    - Spécifier les [zones][2] pour lesquelles vous souhaitez être notifié. (Filtre de zone)
+      - Choisir entre l'application simultanée de toutes les zones requises ou de n'importe quelle zone.
+    - Spécifier le type d'[objets][3] pour lesquels vous souhaitez être notifié. (Filtre d'objet)
+    - Désactiver les notifications si une entité ou un groupe de présence est "à la maison". (Filtre de présence)
+    - Limiter les notifications en fonction de l'état d'une autre entité. (Filtre d'état)
+    - Limiter les notifications à certaines heures de la journée. (Filtre horaire)
+    - Configurer un délai pour la caméra afin de réduire le nombre de notifications lorsque des événements consécutifs se produisent.
+    - Faire taire les notifications futures pendant une période définie via des notifications interactives. Cela est utile dans les situations où vous savez que vous allez déclencher des détections pendant une période prolongée. Par exemple, les enfants jouant à l'extérieur.
+    - Définir un minuteur de rôdage pour vous notifier des objets stationnaires qui restent pendant un temps défini.
+    - Configurer ce qui se passe lorsque vous appuyez sur la notification. (Action de tapotement)
+    - Configurer 3 boutons d'action pour ouvrir presque n'importe quoi. (par défaut : Voir le clip, Voir l'instantané, et Faire taire les nouvelles notifications)
+    - Configurer la taille, la transparence, la position et la durée des notifications TV.
+    - Option de débogage pour aider au dépannage.
+    - Support pour plusieurs instances de Frigate en spécifiant le ClientID et le sujet MQTT.
+    - Délai optionnel pour la notification initiale pour voir si cela résout le problème de l'image non jointe.
+    - Vue en direct sur iOS.
+    - Option Android : Sticky selon https://community.home-assistant.io/t/frigate-mobile-app-notifications/311091/1043
+    - Ajouter un délai de 5s à la mise à jour finale de la notification pour s'assurer que Frigate a le temps de sauvegarder les modifications de l'instantané (recadrage, boîte de délimitation, etc.) si "mettre à jour la miniature" est activé.
+    - Ajouter une option Vidéo (gif) sur Android qui sera envoyée 5 secondes après la fin de l'événement.
+    - Support des sous-titres.
+    - Vidéo pour iOS envoyée 5 secondes après la fin de l'événement.
+    - Définir une entité personnalisée pour la vue en direct iOS.
+    - Définir des icônes pour les boutons d'action sur iOS.
+    - Supprimer les underscores et les numéros de la fin du nom de la caméra. (Cela cassera l'automatisation pour toute caméra Frigate se terminant par _x.)
+    - Option Android Auto.
+    - Filtre personnalisé.
+    - Personnaliser le groupe sur les appareils mobiles.
+    - Options de recadrage et de boîte de délimitation pour la pièce jointe.
+    - Définir le volume de notification sur iOS
+    - S'intègre avec Double Take pour remplacer les étiquettes d'objet par des noms si un visage est reconnu.
+
+  [1]: https://companion.home-assistant.io/docs/notifications/notifications-basic#sending-notifications-to-multiple-devices
+  [2]: https://blakeblackshear.github.io/frigate/configuration/cameras#zones
+  [3]: https://blakeblackshear.github.io/frigate/configuration/objects
+
+  ## Support
+  Allez sur https://github.com/SgtBatten/HA_blueprints pour signaler des bugs, demander de nouvelles fonctionnalités ou obtenir de l'aide pour votre configuration.
+
+domain: automation
+source_url: https://github.com/SgtBatten/HA_blueprints/blob/main/Frigate_Camera_Notifications/Stable.yaml
+input:
+  camera:
+    name: Caméra Frigate
+    description: |
+      Sélectionnez l'entité de la caméra qui déclenchera les notifications.
+      Si vous ne voyez pas de caméras répertoriées dans le menu déroulant, vérifiez que l'intégration Frigate est installée.
+
+      Remarque : L'automatisation repose sur la correspondance du nom de la caméra Frigate avec l'ID de l'entité dans Home Assistant. Il supprimera automatiquement "_x" à la fin de l'ID de l'entité où x est un nombre. Si le nom de votre caméra dans Frigate se termine par _x, vous devez modifier manuellement le yaml de cette automatisation pour l'ajouter deux fois, par exemple, camera.front_1_1.
+    selector:
+      entity:
+        integration: frigate
+        domain: camera
+        device_class: camera
+  notify_device:
+    name: Appareil mobile
+    description: Sélectionnez un appareil qui exécute l'application officielle Home Assistant pour recevoir des notifications. Si vous souhaitez notifier un groupe d'appareils et/ou Android/Fire TV, utilisez le champ ci-dessous pour remplacer cette sélection. Cela sera ignoré dans ce cas mais reste obligatoire.
+    default: false
+    selector:
+      device:
+        integration: mobile_app
+  notify_group:
+    name: Groupe de notifications ou Android/Fire TV (Optionnel)
+    description: |
+      Le nom du groupe ou de la TV individuelle à qui envoyer les notifications.
+      Si défini, cela remplacera les appareils individuels ci-dessus.
+
+      Remarque : Si le groupe contient à la fois des appareils mobiles et des TV, la TV n'affichera pas l'instantané à moins que "Notifications TV" soit défini sur true. Cependant, cela empêchera les appareils Android de recevoir des miniatures.
+    default: ""
+  base_url:
+    name: URL de base (Optionnel)
+    description: |
+      L'URL externe de votre instance Home Assistant.
+      Recommandé pour iOS et requis pour Android/Fire TV.
+      Doit inclure le schéma, par exemple http:// ou https://
+      Exemples : http://192.168.1.25:8123 https://homeassistant.mydomain.com
+    default: ""
+  mqtt_topic:
+    name: Sujet MQTT (Avancé)
+    description: Le sujet MQTT dans lequel Frigate envoie des messages.
+    default: frigate/events
+  client_id:
+    name: Client ID (Optionnel-Avancé)
+    description: Utilisé pour supporter plusieurs instances de Frigate. Laissez vide si vous ne savez pas quoi faire.
+    default: ""
+  notification_customisations:
+    name: |
+      # Personnalisations des notifications
+    description: Ce sont les options de personnalisation des notifications
+    icon: mdi:bell
+    collapsed: true
+    input:
+      title:
+        name: Titre de la notification (Optionnel)
+        description: Le titre de la notification.
+
+        default: ""
+      message:
+        name: Message de la notification
+        description: |
+          Le message de la notification.
+          Vous pouvez utiliser des variables telles que {{camera_name}} et {{label}}
+          par exemple, Un {{ label }} {{ 'est en train de rôder' si loitering sinon 'a été détecté' }} sur la caméra {{ camera_name }}.
+
+        default: Un {{ label }} {{ 'est en train de rôder' si loitering sinon 'a été détecté' }} sur la caméra {{ camera_name }}.
+        selector:
+          select:
+            options:
+              - label: "Par défaut : par exemple, Une personne a été détectée sur la caméra latérale."
+                value: "Un {{ label }} {{ 'est en train de rôder' si loitering sinon 'a été détecté' }} sur la caméra {{ camera_name }}. "
+              - label: "Court : par exemple, Personne détectée - Côté"
+                value: "{{ label }} détecté - {{ camera_name }}"
+              - label: "Court avec un horodatage HH:MM"
+                value: "{{ label }} détecté - {{ camera_name }} à {{event['after']['start_time']|timestamp_custom('%H:%M')}}"
+              - label: "Long : par exemple, Une personne a été détectée sur la caméra latérale dans l'allée."
+                value: "Un {{ label }} {{ 'est en train de rôder' si loitering sinon 'a été détecté' }} sur la caméra {{ camera_name }}{{ ' dans le ' + enteredzones | join(', ') | replace('_',' ') si enteredzones }}. "
+              - label: "Long avec un horodatage HH:MM"
+                value: "Un {{ label }} {{ 'est en train de rôder' si loitering sinon 'a été détecté' }} sur la caméra {{ camera_name }}{{ ' dans le ' + enteredzones | join(', ') | replace('_',' ') si enteredzones }} à {{event['after']['start_time']|timestamp_custom('%H:%M')}}. "
+            custom_value: true
+      update_sub_label:
+        name: Mettre à jour le sous-label (Avancé)
+        description: |
+          Mettre à jour le titre et/ou le message avec le nom de visage correspondant et déclencher une mise à jour de la notification.
+
+          Nécessite la détection de visage pour être configurée (Avancé). Nécessite que le Titre et/ou le Message contiennent 'Une personne' ou 'Un {{ label }}'
+        default: true
+        selector:
+          boolean:
+      subtitle:
+        name: Sous-titre
+        description: Un sous-titre secondaire que vous pouvez utiliser dans vos notifications.
+        default: ""
+      critical:
+        name: Notification critique (Optionnel)
+        description: |
+          Envoyer en tant que notification critique à l'appareil mobile. Cela ignorera les modes silencieux/vibreur.
+          Vous pouvez choisir de limiter les notifications critiques à certains moments en utilisant un modèle (quelques exemples sont fournis mais vous pouvez entrer le vôtre tant qu'il produit true ou false)
+        default: "false"
+        selector:
+          select:
+            options:
+              - "false"
+              - "true"
+              - "{{'false' si now().hour dans [8,9,10,11,12,13,14,15,16,17,18] sinon 'true'}}"
+              - "{{'true' si is_state('sun.sun', 'above_horizon') sinon 'false' }}"
+              - "{{ event['after']['top_score'] |float(0) > 0.8 }}"
+            custom_value: true
+      alert_once:
+        name: Alerte une fois (Optionnel)
+        description: Seule la première notification pour chaque événement jouera un son. Les mises à jour, y compris les nouvelles miniatures, seront silencieuses. Les utilisateurs iOS qui utilisent les notifications critiques ci-dessus entendront toujours les sons critiques par défaut pour les mises à jour.
+        default: false
+        selector:
+          boolean:
+      attachment:
+        name: Pièce jointe
+        description: |
+          Choisissez quelle image joindre à la notification.
+
+          Remarque : Les TV recevront toujours l'instantané si TV est true
+        default: thumbnail.jpg
+        selector:
+          select:
+            options:
+              - label: Miniature
+                value: thumbnail.jpg
+              - label: Instantané
+                value: snapshot.jpg
+              - label: Instantané avec boîte de délimitation
+                value: snapshot.jpg?bbox=1
+              - label: Instantané recadré
+                value: snapshot.jpg?crop=1
+              - label: Instantané recadré avec boîte de délimitation
+                value: snapshot.jpg?bbox=1&crop=1
+            mode: dropdown
+      update_thumbnail:
+        name: Mettre à jour l'image (Optionnel)
+        description: Mettre à jour la notification si une nouvelle image "mieux" est disponible.
+        default: false
+        selector:
+          boolean:
+      video:
+        name: Vidéo (Optionnel)
+        description: Vous pouvez éventuellement joindre le clip à la notification qui remplacera la miniature/instantané ci-dessus, si disponible.
+        default: ""
+        selector:
+          select:
+            options:
+              - label: Aucun
+                value: ""
+              - label: Clip
+                value: "{{base_url}}/api/frigate{{client_id}}/notifications/{{id}}/{{camera}}/clip.mp4"
+      color:
+        name: Couleur de la notification - Android/TV uniquement (Optionnel)
+        description: Définir la couleur de la notification sur votre appareil mobile Android ou TV.
+        default: "#03a9f4"
+        selector:
+          select:
+            options:
+              - label: Principal (Acier bleu)
+                value: "#03a9f4"
+              - label: Rouge
+                value: "#f44336"
+              - label: Rose
+                value: "#e91e63"
+              - label: Violet
+                value: "#926bc7"
+              - label: Violet foncé
+                value: "#6e41ab"
+              - label: Indigo
+                value: "#3f51b5"
+              - label: Bleu
+                value: "#2196f3"
+              - label: Bleu clair
+                value: "#03a9f4"
+              - label: Cyan
+                value: "#00bcd4"
+              - label: Turquoise
+                value: "#009688"
+              - label: Vert
+                value: "#4caf50"
+              - label: Vert clair
+                value: "#8bc34a"
+              - label: Citron vert
+                value: "#cddc39"
+              - label: Jaune
+                value: "#ffeb3b"
+              - label: Ambre
+                value: "#ffc107"
+              - label: Orange
+                value: "#ff9800"
+              - label: Orange foncé
+                value: "#ff5722"
+              - label: Marron
+                value: "#795548"
+              - label: Gris clair
+                value: "#bdbdbd"
+              - label: Gris
+                value: "#9e9e9e"
+              - label: Gris foncé
+                value: "#606060"
+              - label: Bleu gris
+                value: "#607d8b"
+              - label: Noir
+                value: "#000000"
+              - label: Blanc
+                value: "#ffffff"
+      icon:
+        name: Icône de notification (Optionnel)
+        description: Changer l'icône qui s'affiche sur la notification. Vous pouvez entrer une seule icône ou créer un modèle comme celui de l'exemple donné dans le menu déroulant. Vous devez inclure 'mdi:' dans le nom de l'icône.
+        default: mdi:homeassistant
+        selector:
+          select:
+            options:
+              - mdi:homeassistant
+              - mdi:cctv
+              - "mdi:{{'account-outline' si label == 'Personne' sinon 'dog' si label == 'Chien' sinon 'cat' si label == 'Chat' sinon 'car' si label == 'Voiture' sinon 'home-assistant'}}"
+            custom_value: true
+      group:
+        name: Groupe
+        description: Le nom du groupe qui déterminera si les notifications sont groupées sur votre appareil mobile. Si vous souhaitez que les notifications soient groupées par caméra, assurez-vous qu'il contient {{camera}}
+        default: "{{camera}}-frigate-notification{{'-loitering' si loitering}}"
+      sound:
+        name: Son de notification - iOS uniquement (Optionnel)
+        description: Vous pouvez spécifier un fichier son sur votre appareil qui sera joué pour les notifications. Vous devrez importer le fichier son dans Home Assistant.
+        default: default
+        selector:
+          select:
+            options:
+              - default
+              - none
+            custom_value: true
+      volume:
+        name: Volume du son - iOS uniquement (Optionnel)
+        description: Vous pouvez spécifier un niveau de son entre 0 et 100
+        default: 100
+        selector:
+          number:
+            max: 100
+            min: 0
+            unit_of_measurement: "%"
+            step: 1
+            mode: slider
+      ios_live_view:
+        name: Entité de vue en direct - iOS uniquement (Optionnel)
+        description: Joindre une vue en direct de l'entité sélectionnée à la notification pour les appareils iOS.
+        default: ""
+        selector:
+          entity:
+            domain: camera
+      android_auto:
+        name: Android Auto
+        description: Afficher la notification sur Android Auto si l'appareil récepteur est connecté.
+        default: false
+        selector:
+          boolean:
+      sticky:
+        name: Sticky - Android uniquement (Optionnel)
+        description: |
+          Lorsque activé, la notification restera active sur l'appareil après l'avoir tapée et restera là jusqu'à ce qu'elle soit effacée.
+        default: false
+        selector:
+          boolean:
+      channel:
+        name: Canal de notification - Android uniquement (Optionnel)
+        description: Créer un nouveau canal pour les notifications afin de permettre des sons de notification personnalisés, des modèles de vibration et de remplacer le mode Ne pas déranger. Configuré directement sur l'appareil.
+        default: ""
+  filters:
+    name: |
+      # Filtres
+    description: Ce sont les options de filtre
+    icon: mdi:filter
+    collapsed: true
+    input:
+      zone_filter:
+        name: Filtre de zone marche/arrêt (Optionnel)
+        description: Activer pour notifier uniquement si un objet est entré dans une zone répertoriée ci-dessous.
+        default: false
+        selector:
+          boolean:
+      zones:
+        name: Zones requises (Optionnel - Activé ci-dessus)
+        description: |
+          Entrez le nom d'une zone à la fois. Il doit être en minuscules et inclure des underscores selon votre configuration Frigate.
+          Par défaut, toute zone est acceptable. Si vous souhaitez que TOUTES les zones répertoriées soient entrées avant de recevoir une notification, activez le bouton multi ci-dessous.
+        default: []
+        selector:
+          select:
+            options:
+              - examples
+              - porch
+              - front_door
+              - side
+              - garden
+            multiple: true
+            custom_value: true
+      zone_multi:
+        name: Multi-zone (Optionnel)
+        description: Exiger que toutes les zones spécifiées ci-dessus soient entrées, au lieu de toute zone répertoriée. Le filtre de zone doit également être activé.
+        default: false
+        selector:
+          boolean:
+      labels:
+        name: Filtre d'objet (Optionnel)
+        description: |
+          Spécifiez les objets pour lesquels vous souhaitez être notifié. Entrez ou sélectionnez un objet à la fois.
+        default: ""
+        selector:
+          select:
+            options:
+              - person
+              - dog
+              - cat
+              - car
+              - package
+              - bird
+            multiple: true
+            custom_value: true
+      presence_filter:
+        name: Filtre de présence (Optionnel)
+        description: Notifier uniquement si TOUTES les entités de présence sélectionnées ne sont pas "à la maison".
+        default: ""
+        selector:
+          entity:
+            filter:
+              domain:
+                - device_tracker
+                - person
+                - group
+            multiple: true
+      state_filter:
+        name: Filtre d'état marche/arrêt (Optionnel)
+        description: Activer les deux paramètres de filtre d'état ci-dessous. Notifier uniquement si l'entité sélectionnée est dans les états spécifiés.
+        default: false
+        selector:
+          boolean:
+      state_entity:
+        name: Entité de filtre d'état (Optionnel)
+        description: Notifier uniquement si l'entité sélectionnée est dans l'état ci-dessous. Vous devez activer "Filtre d'état" ci-dessus pour utiliser ceci.
+        default: ""
+        selector:
+          entity:
+      state_filter_states:
+        name: États de filtre d'état (Optionnel)
+        description: Entrez les états dans lesquels l'entité ci-dessus doit être, un à la fois.
+        default: []
+        selector:
+          select:
+            options: []
+            multiple: true
+            custom_value: true
+      disable_times:
+        name: Filtre horaire (Optionnel)
+        description: Empêcher l'envoi de notifications pendant les heures spécifiées
+        default: []
+        selector:
+          select:
+            multiple: true
+            options:
+              - label: 00:00 - 00:59
+                value: "0"
+              - label: 01:00 - 01:59
+                value: "1"
+              - label: 02:00 - 02:59
+                value: "2"
+              - label: 03:00 - 03:59
+                value: "3"
+              - label: 04:00 - 04:59
+                value: "4"
+              - label: 05:00 - 05:59
+                value: "5"
+              - label: 06:00 - 06:59
+                value: "6"
+              - label: 07:00 - 07:59
+                value: "7"
+              - label: 08:00 - 08:59
+                value: "8"
+              - label: 09:00 - 09:59
+                value: "9"
+              - label: 10:00 - 10:59
+                value: "10"
+              - label: 11:00 - 11:59
+                value: "11"
+              - label: 12:00 - 12:59
+                value: "12"
+              - label: 13:00 - 13:59
+                value: "13"
+              - label: 14:00 - 14:59
+                value: "14"
+              - label: 15:00 - 15:59
+                value: "15"
+              - label: 16:00 - 16:59
+                value: "16"
+              - label: 17:00 - 17:59
+                value: "17"
+              - label: 18:00 - 18:59
+                value: "18"
+              - label: 19:00 - 19:59
+                value: "19"
+              - label: 20:00 - 20:59
+                value: "20"
+              - label: 21:00 - 21:59
+                value: "21"
+              - label: 22:00 - 22:59
+                value: "22"
+              - label: 23:00 - 23:59
+                value: "23"
+      cooldown:
+        name: Cooldown (Optionnel)
+        description: Délai avant d'envoyer une autre notification pour cette caméra après le dernier événement.
+        default: 30
+        selector:
+          number:
+            max: 86400
+            min: 0
+            unit_of_measurement: seconds
+      custom_filter:
+        name: Filtre personnalisé (Optionnel - Avancé)
+        description: Un filtre qui doit résulter en true ou false mais peut être modélisé selon les besoins. Vous devrez vous assurer qu'il est enfermé avec les "guillemets" et {
